@@ -1,0 +1,288 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+// Classe représentant un étudiant avec ID, prénom, et nom.
+public class Etudiant
+{
+    public int IdEtudiant { get; set; }
+    public string Prenom { get; set; }
+    public string Nom { get; set; }
+
+    // Constructeur pour initialiser un nouvel étudiant.
+    public Etudiant(int idEtudiant, string prenom, string nom)
+    {
+        IdEtudiant = idEtudiant;
+        Prenom = prenom;
+        Nom = nom;
+    }
+
+    // Méthode pour retourner une chaîne de caractères représentant l'étudiant.
+    public override string ToString()
+    {
+        return $"ID: {IdEtudiant}, Prénom: {Prenom}, Nom: {Nom}";
+    }
+}
+
+// Classe représentant un cours avec ID, code et titre.
+public class Cours
+{
+    public int IdCours { get; set; }
+    public string Code { get; set; }
+    public string Titre { get; set; }
+
+    // Constructeur pour initialiser un nouveau cours.
+    public Cours(int idCours, string code, string titre)
+    {
+        IdCours = idCours;
+        Code = code;
+        Titre = titre;
+    }
+
+    // Méthode pour retourner une chaîne de caractères représentant le cours.
+    public override string ToString()
+    {
+        return $"ID Cours: {IdCours}, Code: {Code}, Titre: {Titre}";
+    }
+}
+
+// Classe représentant une note attribuée à un étudiant pour un cours.
+public class Note
+{
+    public int IdEtudiant { get; set; }
+    public int IdCours { get; set; }
+    public double NoteObtenue { get; set; }
+
+    // Constructeur pour initialiser une nouvelle note.
+    public Note(int idEtudiant, int idCours, double noteObtenue)
+    {
+        IdEtudiant = idEtudiant;
+        IdCours = idCours;
+        NoteObtenue = noteObtenue;
+    }
+
+    // Méthode pour retourner une chaîne de caractères représentant la note.
+    public override string ToString()
+    {
+        return $"ID Étudiant: {IdEtudiant}, ID Cours: {IdCours}, Note: {NoteObtenue}";
+    }
+}
+
+// Classe de gestion des étudiants, cours et notes.
+public class GestionnaireDeNotes
+{
+    private List<Etudiant> etudiants = new List<Etudiant>();
+    private List<Cours> cours = new List<Cours>();
+    private List<Note> notes = new List<Note>();
+
+    // Ajoute un étudiant et sauvegarde son information dans un fichier.
+    public void AjouterEtudiant(Etudiant etudiant)
+    {
+        etudiants.Add(etudiant);
+        SauvegarderEtudiant(etudiant);
+    }
+
+    // Ajoute un cours à la liste.
+    public void AjouterCours(Cours cours)
+    {
+        this.cours.Add(cours);
+    }
+
+    // Ajoute une note et met à jour le fichier de l'étudiant.
+    public void AjouterNote(Note note)
+    {
+        notes.Add(note);
+        SauvegarderNote(note);
+    }
+
+    // Récupère le relevé de notes d'un étudiant à partir de son ID.
+    public string ObtenirReleveDeNotes(int idEtudiant)
+    {
+        var etudiant = etudiants.FirstOrDefault(e => e.IdEtudiant == idEtudiant);
+        if (etudiant != null)
+        {
+            try
+            {
+                return File.ReadAllText($"{etudiant.IdEtudiant}.txt");
+            }
+            catch (IOException)
+            {
+                return "Erreur de lecture du fichier de l'étudiant.";
+            }
+        }
+        return "Étudiant non trouvé.";
+    }
+
+    // Sauvegarde les informations de l'étudiant dans un fichier.
+    private void SauvegarderEtudiant(Etudiant etudiant)
+    {
+        var filePath = $"{etudiant.IdEtudiant}.txt";
+        try
+        {
+            File.WriteAllText(filePath, etudiant.ToString() + Environment.NewLine);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la sauvegarde des informations de l'étudiant: {ex.Message}");
+        }
+    }
+
+    // Sauvegarde les notes dans le fichier de l'étudiant correspondant.
+    private void SauvegarderNote(Note note)
+    {
+        var etudiant = etudiants.FirstOrDefault(e => e.IdEtudiant == note.IdEtudiant);
+        if (etudiant != null)
+        {
+            var filePath = $"{etudiant.IdEtudiant}.txt";
+            try
+            {
+                File.AppendAllText(filePath, note.ToString() + Environment.NewLine);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erreur lors de la sauvegarde de la note: {ex.Message}");
+            }
+        }
+    }
+}
+
+// Programme principal qui offre une interface en ligne de commande.
+class Programme
+{
+    static GestionnaireDeNotes gestionnaire = new GestionnaireDeNotes();
+
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Bienvenue dans le système de gestion des notes des étudiants!");
+        bool continuer = true;
+
+        while (continuer)
+        {
+            Console.WriteLine("\nChoisissez une option:");
+            Console.WriteLine("1: Ajouter un étudiant");
+            Console.WriteLine("2: Ajouter un cours");
+            Console.WriteLine("3: Ajouter une note à un étudiant");
+            Console.WriteLine("4: Afficher le relevé de notes d'un étudiant");
+            Console.WriteLine("5: Quitter");
+            Console.Write("Entrez le numéro de votre choix: ");
+            var choix = Console.ReadLine();
+
+            switch (choix)
+            {
+                case "1":
+                    AjouterEtudiant();
+                    break;
+                case "2":
+                    AjouterCours();
+                    break;
+                case "3":
+                    AjouterNote();
+                    break;
+                case "4":
+                    AfficherReleveDeNotes();
+                    break;
+                case "5":
+                    continuer = false;
+                    break;
+                default:
+                    Console.WriteLine("Choix non valide. Veuillez essayer de nouveau.");
+                    break;
+            }
+        }
+    }
+
+    static void AjouterEtudiant()
+    {
+        try
+        {
+            var id = SaisirEntier("Entrez l'ID de l'étudiant: ");
+            Console.Write("Entrez le prénom de l'étudiant: ");
+            var prenom = Console.ReadLine();
+            Console.Write("Entrez le nom de l'étudiant: ");
+            var nom = Console.ReadLine();
+
+            var etudiant = new Etudiant(id, prenom, nom);
+            gestionnaire.AjouterEtudiant(etudiant);
+            Console.WriteLine("Étudiant ajouté avec succès.\n");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Une erreur est survenue: {ex.Message}");
+        }
+    }
+
+    static void AjouterCours()
+    {
+        try
+        {
+            var idCours = SaisirEntier("Entrez l'ID du cours: ");
+            Console.Write("Entrez le code du cours: ");
+            var code = Console.ReadLine();
+            Console.Write("Entrez le titre du cours: ");
+            var titre = Console.ReadLine();
+
+            var cours = new Cours(idCours, code, titre);
+            gestionnaire.AjouterCours(cours);
+            Console.WriteLine("Cours ajouté avec succès.\n");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Une erreur est survenue: {ex.Message}");
+        }
+    }
+
+    static void AjouterNote()
+    {
+        try
+        {
+            var idEtudiant = SaisirEntier("Entrez l'ID de l'étudiant pour lequel ajouter une note: ");
+            var idCours = SaisirEntier("Entrez l'ID du cours pour lequel ajouter une note: ");
+            var noteObtenue = SaisirDouble("Entrez la note obtenue par l'étudiant: ");
+
+            var note = new Note(idEtudiant, idCours, noteObtenue);
+            gestionnaire.AjouterNote(note);
+            Console.WriteLine("Note ajoutée avec succès.\n");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Une erreur est survenue: {ex.Message}");
+        }
+    }
+
+    static int SaisirEntier(string prompt)
+    {
+        int resultat;
+        Console.Write(prompt);
+        while (!int.TryParse(Console.ReadLine(), out resultat))
+        {
+            Console.Write("Entrée invalide, veuillez entrer un nombre entier: ");
+        }
+        return resultat;
+    }
+
+    static double SaisirDouble(string prompt)
+    {
+        double resultat;
+        Console.Write(prompt);
+        while (!double.TryParse(Console.ReadLine(), out resultat))
+        {
+            Console.Write("Entrée invalide, veuillez entrer un nombre valide pour la note: ");
+        }
+        return resultat;
+    }
+
+    static void AfficherReleveDeNotes()
+    {
+        try
+        {
+            var id = SaisirEntier("Entrez l'ID de l'étudiant pour lequel afficher le relevé de notes: ");
+            var releve = gestionnaire.ObtenirReleveDeNotes(id);
+            Console.WriteLine(releve);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Une erreur est survenue: {ex.Message}");
+        }
+    }
+}
